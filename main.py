@@ -17,7 +17,7 @@ def parse_markdown(program):
     lg.add('BLOCKQUOTE', r'\>')
     lg.add('NEWLINE', r'\n')
     lg.add('WHITESPACE', r'[ \t]+')
-    lg.add('TEXT', r'[^#\*\n\[\]`!\-]+')
+    lg.add('TEXT', r'[^#\*\n\[\]`!\-\~]+')
 
     lg.ignore(r'[ \t]+')
 
@@ -89,15 +89,15 @@ def parse_markdown(program):
 
     @pg.production('text_content : BOLD text_content BOLD')
     def bold_text(p):
-        return f'<strong>{p[1]}</strong>'
+        return f'<strong>{p[1]}</strong> '
 
     @pg.production('text_content : ITALIC text_content ITALIC')
     def italic_text(p):
-        return f'<em>{p[1]}</em>'
+        return f'<em>{p[1]}</em> '
 
     @pg.production('text_content : STRIKETHROUGH text_content STRIKETHROUGH')
     def strikethrough_text(p):
-        return f'<del>{p[1]}</del>'
+        return f'<del>{p[1]}</del> '
 
     @pg.production('text_content : LINK_OPEN text_content LINK_CLOSE URL')
     def link(p):
