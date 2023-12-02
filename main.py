@@ -39,7 +39,7 @@ def parse_markdown(program):
 
     @pg.production('document : elements')
     def document(p):
-        return '<html><body>' + p[0] + '</body></html>'
+        return '<!DOCTYPE html><html><body>' + p[0] + '</body></html>'
 
     @pg.production('elements : element elements')
     def elements_many(p):
