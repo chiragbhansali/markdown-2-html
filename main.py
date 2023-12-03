@@ -131,6 +131,41 @@ def parse_markdown(program):
         code_content = code_content.replace("'", '&#39;')
         return f'<code>{code_content}</code>'
 
+
+    @pg.production('bulleted_list_item : LIST_BULLET text_contents')
+    def bulleted_list_item(p):
+        return f'<li>{p[1]}</li>'
+
+    @pg.production('numbered_list_item : LIST_NUMBER text_contents')
+    def numbered_list_item(p):
+        return f'<li>{p[1]}</li>'
+
+    @pg.production('bulleted_list : bulleted_list_item separators bulleted_list')
+    def build_bulleted_list_multiple(p):
+        p[2].append(p[0])
+        return p[2]
+
+    @pg.production('bulleted_list : bulleted_list_item separators')
+    def build_bulleted_list(p):
+        return [p[0]]
+
+    @pg.production('numbered_list : numbered_list_item separators numbered_list')
+    def build_numbered_list_multiple(p):
+        p[2].append(p[0])
+        return p[2]
+
+    @pg.production('numbered_list : numbered_list_item separators')
+    def build_numbered_list(p):
+        return [p[0]]
+
+    @pg.production('element : bulleted_list')
+    def bulleted_list_element(p):
+        return f'<ul>{"".join(p[0])}</ul>'
+
+    @pg.production('element : numbered_list')
+    def numbered_list_element(p):
+        return f'<ol>{"".join(p[0])}</ol>'
+
     @pg.error
     def error_handler(token):
         print(token)
