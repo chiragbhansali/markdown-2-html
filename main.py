@@ -25,8 +25,8 @@ def parse_markdown(program):
 
     tokens_iter = lexer.lex(program)
 
-    for token in tokens_iter:
-        print(token)
+    # for token in tokens_iter:
+    #     print(token)
 
     possible_tokens = [rule.name for rule in lexer.rules]
 
@@ -111,11 +111,25 @@ def parse_markdown(program):
 
     @pg.production('element : CODE_BLOCK')
     def code_block(p):
-        return f'<pre><code>{p[1].getstr()}</code></pre>'
+        code_content = p[0].getstr()[3:-3]
+        # Escape HTML special characters
+        code_content = code_content.replace('&', '&amp;')
+        code_content = code_content.replace('<', '&lt;')
+        code_content = code_content.replace('>', '&gt;')
+        code_content = code_content.replace('"', '&quot;')
+        code_content = code_content.replace("'", '&#39;')
+        return f'<pre><code>{code_content}</code></pre>'
 
     @pg.production('element : INLINE_CODE')
     def inline_code(p):
-        return f'<code>{p[1].getstr()}</code>'
+        code_content = p[0].getstr()[1:-1]
+        # Escape HTML special characters
+        code_content = code_content.replace('&', '&amp;')
+        code_content = code_content.replace('<', '&lt;')
+        code_content = code_content.replace('>', '&gt;')
+        code_content = code_content.replace('"', '&quot;')
+        code_content = code_content.replace("'", '&#39;')
+        return f'<code>{code_content}</code>'
 
     @pg.error
     def error_handler(token):
@@ -134,7 +148,7 @@ def parse_markdown(program):
 
 
 inp = """
-Hello
+`<h1>hello </h1>`
 """
 
 output = parse_markdown(inp)
