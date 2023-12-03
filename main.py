@@ -165,6 +165,28 @@ def parse_markdown(program):
     @pg.production('element : numbered_list')
     def numbered_list_element(p):
         return f'<ol>{"".join(p[0])}</ol>'
+    
+    @pg.production('blockquote_line : BLOCKQUOTE text_contents')
+    def blockquote_line(p):
+        return p[1]
+
+    @pg.production('blockquote : blockquote_line separators blockquote')
+    def extend_blockquote(p):
+        # Extend the existing blockquote with a new line
+        p[2].append("<br>")
+        p[2].append(p[0])
+        return p[2]
+    
+    @pg.production('blockquote : blockquote_line separators')
+    def start_blockquote(p):
+        return [p[0]]
+    
+    @pg.production('element : blockquote')
+    def blockquote_element(p):
+        # Join all blockquote lines and wrap in <blockquote>
+        blockquote_content = ''.join(p[0])
+        return f'<blockquote>{blockquote_content}</blockquote>'
+
 
     @pg.error
     def error_handler(token):
