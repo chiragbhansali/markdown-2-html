@@ -2,7 +2,7 @@ from rply import LexerGenerator, ParserGenerator
 
 def parse_markdown(program):
     lg = LexerGenerator()
-    lg.add('HEADING', r'\#{1,6}')
+    lg.add('HEADING', r'\#{1,6} ')
     lg.add('BOLD', r'\*\*|\_\_')
     lg.add('ITALIC', r'\*|\_')
     lg.add('STRIKETHROUGH', r'\~\~')
@@ -17,7 +17,7 @@ def parse_markdown(program):
     lg.add('BLOCKQUOTE', r'\>')
     lg.add('NEWLINE', r'\n')
     lg.add('WHITESPACE', r'[ \t]+')
-    lg.add('TEXT', r'[^#\*\n\[\]`!\-\~\_]+')
+    lg.add('TEXT', r'[^#\*\n\[\]`!\-\~\_]+|#[^ ]+')
 
     lg.ignore(r'[ \t]+')
 
@@ -54,7 +54,7 @@ def parse_markdown(program):
 
     @pg.production('element : HEADING text_content')
     def heading(p):
-        level = len(p[0].getstr())
+        level = len(p[0].getstr())-1
         return f'<h{level}>{p[1]}</h{level}>'
 
     @pg.production('element : text_contents')
@@ -186,7 +186,6 @@ def parse_markdown(program):
         # Join all blockquote lines and wrap in <blockquote>
         blockquote_content = ''.join(p[0])
         return f'<blockquote>{blockquote_content}</blockquote>'
-
 
     @pg.error
     def error_handler(token):
