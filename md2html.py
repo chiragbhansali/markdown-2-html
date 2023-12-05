@@ -1,11 +1,13 @@
+import argparse
+import os
 from rply import LexerGenerator, ParserGenerator
+import warnings
 
 def parse_markdown(program):
     lg = LexerGenerator()
     lg.add('HEADING', r'\#{1,6} ')
     lg.add('BOLD', r'\*\*|\_\_')
     lg.add('ASTERISK_OR_UNDERSCORE', r'\*|_')
-    lg.add('ITALIC', r'\*|\_')
     lg.add('STRIKETHROUGH', r'\~\~')
     lg.add('CODE_BLOCK', r'(?s)\`\`\`(.*?)\`\`\`')
     lg.add('INLINE_CODE',  r'(?s)\`(.*?)\`')
@@ -13,12 +15,10 @@ def parse_markdown(program):
     lg.add('LINK_CLOSE', r'\]')
     lg.add('IMAGE', r'\!\[')
     lg.add('URL', r'\([^\)]+\)')
-    # lg.add('LIST_BULLET', r'\*(?=\s)|\+(?=\s)|\-(?=\s)')
     lg.add('LIST_BULLET', r'\+(?=\s)|\-(?=\s)')
     lg.add('LIST_NUMBER', r'\d+\.(?![^\s])')
     lg.add('BLOCKQUOTE', r'\>')
     lg.add('NEWLINE', r'\n')
-    lg.add('WHITESPACE', r'[ \t]+')
     lg.add('OPEN_PARENS', r'\(')
     lg.add('CLOSE_PARENS', r'\)')
     lg.add('TEXT', r'[^#\*\n\[\]`!\~\_]+|[#][^ ]+|[\-\+\*][^ ]+')
@@ -29,18 +29,15 @@ def parse_markdown(program):
 
     tokens_iter = lexer.lex(program)
 
-    # for token in tokens_iter:
-    #     print(token)
-
     possible_tokens = [rule.name for rule in lexer.rules]
 
     pg = ParserGenerator(possible_tokens,
                            precedence=[
-                               ('left', ['BOLD', 'ITALIC']),
+                               ('left', ['BOLD', 'ASTERISK_OR_UNDERSCORE']),
                                ('left', ['LINK_OPEN', 'LINK_CLOSE', 'IMAGE', 'URL']),
                                ('left', ['CODE_BLOCK', 'INLINE_CODE']),
                                ('left', ['BLOCKQUOTE', 'LIST_BULLET', 'LIST_NUMBER']),
-                               ('left', ['NEWLINE', 'WHITESPACE']),
+                               ('left', ['NEWLINE']),
                             ]
                         )
 
@@ -208,34 +205,34 @@ def parse_markdown(program):
                 token.getsourcepos().colno))
 
     parser = pg.build()
-    intermediate_representation = parser.parse(tokens_iter)
-    return intermediate_representation
+    html_md = parser.parse(tokens_iter)
+    return html_md
 
+if __name__ == "__main__":
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Convert Markdown to HTML")
+    parser.add_argument("md_file", help="Path to the Markdown file")
+    warnings.filterwarnings("ignore")
 
-inp = """
-* See [commit change]() or See [release history]()
-* 0.1
-* Initial Release
+    # Parse arguments
+    args = parser.parse_args()
 
-## Picture
+    md_file = args.md_file
 
-![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](https://myoctocat.com/assets/images/base-octocat.svg)
-![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](https://myoctocat.com/assets/images/base-octocat.svg)
-![Sample local picture](images/sample.jpg)
+    if not md_file.endswith('.md'):
+        raise ValueError("File must have a .md extension")
 
-## Ordered List
+    md_content = ""
+    with open(md_file, 'r') as file:
+        md_content = file.read()
 
-1. James Madison
-1. James Monroe
-3. John Quincy Adams
-"""
+    html_content = parse_markdown(md_content)
 
-output = parse_markdown(inp)
-print(output)
-file_path = "output.html"
+    # Create HTML file path
+    base_name = os.path.splitext(md_file)[0]
+    html_file_path = base_name + '.html'
 
-# Open the file in write mode and write the HTML content to it
-with open(file_path, "w") as html_file:
-    html_file.write(output)
-
-
+    # Write HTML content to a new file
+    with open(html_file_path, 'w') as file:
+        file.write(html_content)
+        print("Markdown file has been converted to HTML.")
