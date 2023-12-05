@@ -19,6 +19,8 @@ def parse_markdown(program):
     lg.add('BLOCKQUOTE', r'\>')
     lg.add('NEWLINE', r'\n')
     lg.add('WHITESPACE', r'[ \t]+')
+    lg.add('OPEN_PARENS', r'\(')
+    lg.add('CLOSE_PARENS', r'\)')
     lg.add('TEXT', r'[^#\*\n\[\]`!\~\_]+|[#][^ ]+|[\-\+\*][^ ]+')
 
     lg.ignore(r'[ \t]+')
@@ -106,6 +108,10 @@ def parse_markdown(program):
     @pg.production('text_content : LINK_OPEN text_content LINK_CLOSE URL')
     def link(p):
         return f'<a href="{p[3].getstr()[1:-1]}">{p[1]}</a>'
+
+    @pg.production('text_content : LINK_OPEN text_content LINK_CLOSE OPEN_PARENS CLOSE_PARENS')
+    def link(p):
+        return f'<a href="">{p[1]}</a> '
 
     @pg.production('element : IMAGE TEXT LINK_CLOSE URL')
     def image(p):
@@ -208,6 +214,20 @@ def parse_markdown(program):
 
 inp = """
 * See [commit change]() or See [release history]()
+* 0.1
+* Initial Release
+
+## Picture
+
+![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](https://myoctocat.com/assets/images/base-octocat.svg)
+![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](https://myoctocat.com/assets/images/base-octocat.svg)
+![Sample local picture](images/sample.jpg)
+
+## Ordered List
+
+1. James Madison
+1. James Monroe
+3. John Quincy Adams
 """
 
 output = parse_markdown(inp)
