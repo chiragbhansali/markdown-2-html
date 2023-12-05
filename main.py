@@ -4,6 +4,7 @@ def parse_markdown(program):
     lg = LexerGenerator()
     lg.add('HEADING', r'\#{1,6} ')
     lg.add('BOLD', r'\*\*|\_\_')
+    lg.add('ASTERISK_OR_UNDERSCORE', r'\*|_')
     lg.add('ITALIC', r'\*|\_')
     lg.add('STRIKETHROUGH', r'\~\~')
     lg.add('CODE_BLOCK', r'(?s)\`\`\`(.*?)\`\`\`')
@@ -12,12 +13,13 @@ def parse_markdown(program):
     lg.add('LINK_CLOSE', r'\]')
     lg.add('IMAGE', r'\!\[')
     lg.add('URL', r'\([^\)]+\)')
-    lg.add('LIST_BULLET', r'\*|\+|\-')
-    lg.add('LIST_NUMBER', r'\d+\.')
+    # lg.add('LIST_BULLET', r'\*(?=\s)|\+(?=\s)|\-(?=\s)')
+    lg.add('LIST_BULLET', r'\+(?=\s)|\-(?=\s)')
+    lg.add('LIST_NUMBER', r'\d+\.(?![^\s])')
     lg.add('BLOCKQUOTE', r'\>')
     lg.add('NEWLINE', r'\n')
     lg.add('WHITESPACE', r'[ \t]+')
-    lg.add('TEXT', r'[^#\*\n\[\]`!\-\~\_]+|#[^ ]+')
+    lg.add('TEXT', r'[^#\*\n\[\]`!\~\_]+|[#][^ ]+|[\-\+\*][^ ]+')
 
     lg.ignore(r'[ \t]+')
 
@@ -93,7 +95,7 @@ def parse_markdown(program):
     def bold_text(p):
         return f'<strong>{p[1]}</strong> '
 
-    @pg.production('text_content : ITALIC text_content ITALIC')
+    @pg.production('text_content : ASTERISK_OR_UNDERSCORE text_content ASTERISK_OR_UNDERSCORE')
     def italic_text(p):
         return f'<em>{p[1]}</em> '
 
@@ -133,6 +135,7 @@ def parse_markdown(program):
 
 
     @pg.production('bulleted_list_item : LIST_BULLET text_contents')
+    @pg.production('bulleted_list_item : ASTERISK_OR_UNDERSCORE text_contents')
     def bulleted_list_item(p):
         return f'<li>{p[1]}</li>'
 
@@ -165,7 +168,7 @@ def parse_markdown(program):
     @pg.production('element : numbered_list')
     def numbered_list_element(p):
         return f'<ol>{"".join(p[0])}</ol>'
-    
+
     @pg.production('blockquote_line : BLOCKQUOTE text_contents')
     def blockquote_line(p):
         return p[1]
@@ -176,11 +179,11 @@ def parse_markdown(program):
         p[2].append("<br>")
         p[2].append(p[0])
         return p[2]
-    
+
     @pg.production('blockquote : blockquote_line separators')
     def start_blockquote(p):
         return [p[0]]
-    
+
     @pg.production('element : blockquote')
     def blockquote_element(p):
         # Join all blockquote lines and wrap in <blockquote>
@@ -204,7 +207,7 @@ def parse_markdown(program):
 
 
 inp = """
-`<h1>hello </h1>`
+* See [commit change]() or See [release history]()
 """
 
 output = parse_markdown(inp)
